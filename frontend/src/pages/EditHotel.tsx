@@ -8,7 +8,8 @@ const EditHotel = () => {
   const { hotelId } = useParams();
   const { showToast } = useAppContext();
 
-  const { data: hotel } = useQuery(
+  // Fetch hotel data using useQuery
+  const { data: hotel, isLoading: isHotelLoading } = useQuery(
     "fetchMyHotelById",
     () => apiClient.fetchMyHotelById(hotelId || ""),
     {
@@ -16,7 +17,7 @@ const EditHotel = () => {
     }
   );
 
-  const { mutate, isLoading } = useMutation(apiClient.updateMyHotelById, {
+  const { mutate, isLoading: isMutationLoading } = useMutation(apiClient.updateMyHotelById, {
     onSuccess: () => {
       showToast({ message: "Hotel Saved!", type: "SUCCESS" });
     },
@@ -26,11 +27,27 @@ const EditHotel = () => {
   });
 
   const handleSave = (hotelFormData: FormData) => {
-    mutate(hotelFormData);
+    console.log("Saving hotel with data:", hotelFormData);
+  
+    mutate(hotelFormData, {
+      onSuccess: (data) => {
+        console.log("Hotel saved successfully:", data);
+        showToast({ message: "Hotel Saved!", type: "SUCCESS" });
+      },
+      onError: (error) => {
+        console.error("Error saving hotel:", error);
+        showToast({ message: "Error Saving Hotel", type: "ERROR" });
+      },
+    });
   };
 
+  // Check for the presence of data before rendering the form
+  if (isHotelLoading) {
+    return <p>Loading...</p>;
+  }
+
   return (
-    <ManageHotelForm hotel={hotel} onSave={handleSave} isLoading={isLoading} />
+    <ManageHotelForm hotel={hotel} onSave={handleSave} isLoading={isMutationLoading} />
   );
 };
 
